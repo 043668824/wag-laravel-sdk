@@ -7,23 +7,18 @@ class MediaService extends BaseService
     /**
      * Upload media file
      */
-    public function upload(string $deviceId, string $filePath, string $type): array
+    public function upload(string $filePath): array
     {
-        return $this->client->request('POST', "/media/upload", [
-            'device_id' => $deviceId,
-            'file_path' => $filePath,
-            'type' => $type
+        return $this->client->request('POST', '/media/upload', [
+            'file' => $filePath
         ]);
     }
 
     /**
      * Download media file
      */
-    public function download(string $deviceId, string $mediaUrl): array
+    public function download(string $mediaId): array
     {
-        return $this->client->request('GET', "/media/download", [
-            'device_id' => $deviceId,
-            'url' => $mediaUrl
-        ]);
+        return $this->client->request('GET', "/media/download/{$mediaId}");
     }
 }

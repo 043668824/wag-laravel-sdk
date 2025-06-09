@@ -7,43 +7,38 @@ class ContactService extends BaseService
     /**
      * Get contact info
      */
-    public function info(string $deviceId, string $jid): array
+    public function getInfo(string $chatId): array
     {
-        return $this->client->request('GET', "/contact/info", [
-            'device_id' => $deviceId,
-            'jid' => $jid
+        return $this->client->request('GET', '/contact/info', [
+            'chatId' => $chatId
         ]);
     }
 
     /**
-     * Get contact avatar
+     * Get contact profile picture
      */
-    public function avatar(string $deviceId, string $jid): array
+    public function getProfilePicture(string $chatId): array
     {
-        return $this->client->request('GET', "/contact/avatar", [
-            'device_id' => $deviceId,
-            'jid' => $jid
+        return $this->client->request('GET', '/contact/profilepicture', [
+            'chatId' => $chatId
         ]);
     }
 
     /**
-     * Check if number is on WhatsApp
+     * Check if contact exists on WhatsApp
      */
-    public function checkExists(string $deviceId, string $phone): array
+    public function checkExists(string $phone): array
     {
-        return $this->client->request('GET', "/contact/check", [
-            'device_id' => $deviceId,
+        return $this->client->request('POST', '/contact/checknumber', [
             'phone' => $phone
         ]);
     }
 
     /**
-     * Get contacts list
+     * Get all contacts
      */
-    public function list(string $deviceId): array
+    public function getAll(): array
     {
-        return $this->client->request('GET', "/contacts", [
-            'device_id' => $deviceId
-        ]);
+        return $this->client->request('GET', '/contact/list');
     }
 }

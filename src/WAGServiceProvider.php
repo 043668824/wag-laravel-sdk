@@ -10,8 +10,7 @@ class WAGServiceProvider extends ServiceProvider
     {
         $this->app->singleton('wag', function ($app) {
             return new WAGClient(
-                $app['config']['wag.base_url'],
-                $app['config']['wag.api_key']
+                $app['config']['wag.base_url']
             );
         });
 

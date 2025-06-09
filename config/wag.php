@@ -3,23 +3,24 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | WhatsApp API Gateway Base URL
+    | WUZAPI Base URL
     |--------------------------------------------------------------------------
     |
-    | The base URL for your WhatsApp API Gateway service.
+    | The base URL for your WUZAPI service.
     |
     */
     'base_url' => env('WAG_BASE_URL', 'http://localhost:8080'),
 
     /*
     |--------------------------------------------------------------------------
-    | API Key
+    | Admin API Key
     |--------------------------------------------------------------------------
     |
-    | The API key for authenticating with your WhatsApp API Gateway.
+    | The API key for authenticating with WUZAPI admin endpoints.
+    | This is for administrative operations only.
     |
     */
-    'api_key' => env('WAG_API_KEY'),
+    'admin_api_key' => env('WAG_ADMIN_API_KEY'),
 
     /*
     |--------------------------------------------------------------------------
@@ -30,14 +31,4 @@ return [
     |
     */
     'timeout' => env('WAG_TIMEOUT', 30),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Default Device ID
-    |--------------------------------------------------------------------------
-    |
-    | The default device ID to use for WhatsApp operations.
-    |
-    */
-    'default_device_id' => env('WAG_DEFAULT_DEVICE_ID'),
 ];

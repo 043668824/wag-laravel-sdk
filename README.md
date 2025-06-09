@@ -51,28 +51,22 @@ Publish the configuration file:
 php artisan vendor:publish --tag=wag-config
 ```
 
-The package will automatically register its service provider with Laravel.
+Add the following variables to your `.env` file:
 
-After installing, publish the configuration file:
-
-bash
-php artisan vendor:publish --tag=wag-config
-Configuration
-
-Add the following variables to your .env file:
-
-Code
+```env
 WUZAPI_BASE_URL=https://your-wuzapi-instance.com
 WUZAPI_ADMIN_TOKEN=your-admin-token-here
 WUZAPI_TIMEOUT=30
 WUZAPI_CONNECT_TIMEOUT=10
 WUZAPI_LOGGING=false
 WUZAPI_LOG_CHANNEL=stack
-Basic Usage
+```
 
-Authentication
+## Basic Usage
 
-PHP
+### Authentication
+
+```php
 // Using the facade (recommended)
 use WAG\LaravelSDK\Facades\WAG;
 
@@ -82,14 +76,16 @@ WAG::setUserToken('your-user-token');
 // Or using dependency injection
 public function sendMessage(WAGClient $wagClient)
 {
-$wagClient->setUserToken('your-user-token');
-// ...
+    $wagClient->setUserToken('your-user-token');
+    // ...
 }
-Messaging
+```
 
-Text Messages
+### Messaging
 
-PHP
+#### Text Messages
+
+```php
 // Send a simple text message
 $response = WAG::chat()->sendSimpleText('5491155553934', 'Hello from WAG SDK!');
 
@@ -98,14 +94,16 @@ $response = WAG::chat()->sendSimpleText('5491155553934', 'Hello with custom ID',
 
 // Send a text as reply to previous message
 $response = WAG::chat()->sendTextReply(
-'5491155553934',
-'This is a reply',
-'original-message-id',
-'sender-jid'
+    '5491155553934',
+    'This is a reply',
+    'original-message-id',
+    'sender-jid'
 );
-Rich Media
+```
 
-PHP
+#### Rich Media
+
+```php
 // Send an image from base64
 $response = WAG::chat()->sendImageFromBase64('5491155553934', $base64Image, 'Optional caption');
 
@@ -114,9 +112,9 @@ $response = WAG::chat()->sendImageFromUrl('5491155553934', 'https://example.com/
 
 // Send a document
 $response = WAG::chat()->sendDocumentFromBase64(
-'5491155553934',
-$base64Document,
-'document.pdf'
+    '5491155553934',
+    $base64Document,
+    'document.pdf'
 );
 
 // Send an audio message
@@ -124,9 +122,11 @@ $response = WAG::chat()->sendAudioFromBase64('5491155553934', $base64Audio);
 
 // Send a video
 $response = WAG::chat()->sendVideoFromBase64('5491155553934', $base64Video, 'Video caption');
-Interactive Messages
+```
 
-PHP
+#### Interactive Messages
+
+```php
 // Send a template with quick reply buttons
 $buttons = [
     WAG::chat()->createQuickReplyButton('btn1', 'Yes'),
@@ -141,28 +141,30 @@ $section1 = WAG::chat()->createListSection('Section 1', [
     WAG::chat()->createListRow('row2', 'Option 2', 'Description for option 2')
 ]);
 $section2 = WAG::chat()->createListSection('Section 2', [
-WAG::chat()->createListRow('row3', 'Option 3', 'Description for option 3')
+    WAG::chat()->createListRow('row3', 'Option 3', 'Description for option 3')
 ]);
 $response = WAG::chat()->sendListMessage(
     '5491155553934',
     'Please select an option:',
     [$section1, $section2],
-'Select',
-'Footer text',
-'List Title'
+    'Select',
+    'Footer text',
+    'List Title'
 );
 
 // Send location
 $response = WAG::chat()->sendLocationCoordinates(
-'5491155553934',
--34.603722,
--58.381592,
-'Buenos Aires',
-'Argentina'
+    '5491155553934',
+    -34.603722,
+    -58.381592,
+    'Buenos Aires',
+    'Argentina'
 );
-Group Management
+```
 
-PHP
+### Group Management
+
+```php
 // Create a group
 $response = WAG::group()->createSimple('My Cool Group', ['5491155553934', '5491144442233']);
 
@@ -186,9 +188,11 @@ $response = WAG::group()->enableDisappearing7d('123456789@g.us');
 
 // Get group information
 $groupInfo = WAG::group()->getInfo('123456789@g.us');
-User Management (Admin)
+```
 
-PHP
+### User Management (Admin)
+
+```php
 // List all users (requires admin token)
 $users = WAG::admin()->listUsers();
 
@@ -197,10 +201,10 @@ $user = WAG::admin()->createSimpleUser('NewUser', 'https://your-webhook.com/wuza
 
 // Create a user with proxy configuration
 $user = WAG::admin()->createUserWithProxy(
-'ProxyUser',
-'https://your-webhook.com/wuzapi',
-'http://your-proxy-server:3128',
-true
+    'ProxyUser',
+    'https://your-webhook.com/wuzapi',
+    'http://your-proxy-server:3128',
+    true
 );
 
 // Delete a user
@@ -208,9 +212,11 @@ $response = WAG::admin()->deleteUser('user-id');
 
 // Delete a user completely (including all data)
 $response = WAG::admin()->deleteUserFull('user-id');
-Session Management
+```
 
-PHP
+### Session Management
+
+```php
 // Connect to WhatsApp
 $response = WAG::session()->connect();
 
@@ -237,16 +243,18 @@ $response = WAG::session()->disconnect();
 
 // Logout (terminate session)
 $response = WAG::session()->logout();
-Webhook Management
+```
 
-PHP
+### Webhook Management
+
+```php
 // Set webhook URL for all events
 $response = WAG::webhook()->setForAllEvents('https://your-webhook.com/wuzapi');
 
 // Set webhook for specific events
 $response = WAG::webhook()->setWithEvents(
-'https://your-webhook.com/wuzapi',
-['Message', 'ReadReceipt']
+    'https://your-webhook.com/wuzapi',
+    ['Message', 'ReadReceipt']
 );
 
 // Get current webhook configuration
@@ -263,59 +271,72 @@ $response = WAG::webhook()->deactivate();
 
 // Delete webhook configuration
 $response = WAG::webhook()->delete();
-Error Handling
+```
 
-The SDK throws WAGException when API calls fail:
+## Error Handling
 
-PHP
+The SDK throws `WAGException` when API calls fail:
+
+```php
 use WAG\LaravelSDK\Exceptions\WAGException;
 
 try {
-$response = WAG::chat()->sendSimpleText('5491155553934', 'Hello!');
+    $response = WAG::chat()->sendSimpleText('5491155553934', 'Hello!');
 } catch (WAGException $e) {
-$errorMessage = $e->getMessage();
-$statusCode = $e->getCode();
-$responseData = $e->getResponseData();
+    $errorMessage = $e->getMessage();
+    $statusCode = $e->getCode();
+    $responseData = $e->getResponseData();
 
     // Handle error
     Log::error("WhatsApp API Error: {$errorMessage}", [
         'code' => $statusCode,
         'data' => $responseData
     ]);
-
 }
-Phone Number Formatting
+```
+
+## Phone Number Formatting
 
 The SDK automatically formats phone numbers to meet WhatsApp API requirements:
 
-PHP
+```php
 // These all result in the same formatted number
 WAG::chat()->sendSimpleText('5491155553934', 'Hello!');
 WAG::chat()->sendSimpleText('+5491155553934', 'Hello!');
 WAG::chat()->sendSimpleText('549 11 5555 3934', 'Hello!');
-Available Services
+```
+
+## Available Services
 
 The SDK provides the following services:
 
-admin() - Administrative operations
-session() - Session management and connection
-webhook() - Webhook configuration
-chat() - Messaging operations
-user() - User profile operations
-group() - Group management
-newsletter() - Newsletter operations
-Utility Classes
+- `admin()` - Administrative operations
+- `session()` - Session management and connection
+- `webhook()` - Webhook configuration
+- `chat()` - Messaging operations
+- `user()` - User profile operations
+- `group()` - Group management
+- `newsletter()` - Newsletter operations
+
+## Utility Classes
 
 The SDK includes helpful utility classes:
 
-PhoneFormatter - Format and validate phone numbers
-ResponseFormatter - Extract and process API responses
-Security
+- `PhoneFormatter` - Format and validate phone numbers
+- `ResponseFormatter` - Extract and process API responses
 
-Never store WhatsApp tokens in environment variables or in version control
-Use proper database encryption for storing user tokens
-Consider implementing token rotation for enhanced security
-Testing
+## Security
 
-bash
+- Never store WhatsApp tokens in environment variables or in version control
+- Use proper database encryption for storing user tokens
+- Consider implementing token rotation for enhanced security
+
+## Testing
+
+```bash
 composer test
+```
+
+## License
+
+This package is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

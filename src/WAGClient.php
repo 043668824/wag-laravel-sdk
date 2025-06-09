@@ -7,6 +7,8 @@ use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
 use WAG\LaravelSDK\Contracts\ClientInterface;
 use WAG\LaravelSDK\Exceptions\WAGException;
+use WAG\LaravelSDK\Utils\PhoneFormatter;
+use WAG\LaravelSDK\Utils\ResponseFormatter;
 use WAG\LaravelSDK\Services\{
     AdminService,
     SessionService,
@@ -73,6 +75,30 @@ class WAGClient implements ClientInterface
     }
 
     /**
+     * Format phone number according to WUZAPI requirements
+     */
+    public function formatPhoneNumber(string $phone): string
+    {
+        return PhoneFormatter::format($phone);
+    }
+    
+    /**
+     * Format phone number to JID format
+     */
+    public function formatPhoneToJID(string $phone): string
+    {
+        return PhoneFormatter::toJID($phone);
+    }
+    
+    /**
+     * Validate phone number
+     */
+    public function isValidPhoneNumber(string $phone): bool
+    {
+        return PhoneFormatter::validate($phone);
+    }
+
+    /**
      * Create a new admin service instance
      */
     public function admin(): AdminService
@@ -80,7 +106,53 @@ class WAGClient implements ClientInterface
         return new AdminService($this);
     }
     
-    // Other service methods...
+    /**
+     * Create a new session service instance
+     */
+    public function session(): SessionService
+    {
+        return new SessionService($this);
+    }
+    
+    /**
+     * Create a new webhook service instance
+     */
+    public function webhook(): WebhookService
+    {
+        return new WebhookService($this);
+    }
+    
+    /**
+     * Create a new chat service instance
+     */
+    public function chat(): ChatService
+    {
+        return new ChatService($this);
+    }
+    
+    /**
+     * Create a new group service instance
+     */
+    public function group(): GroupService
+    {
+        return new GroupService($this);
+    }
+    
+    /**
+     * Create a new user service instance
+     */
+    public function user(): UserService
+    {
+        return new UserService($this);
+    }
+    
+    /**
+     * Create a new newsletter service instance
+     */
+    public function newsletter(): NewsletterService
+    {
+        return new NewsletterService($this);
+    }
     
     /**
      * Make request with user token authentication

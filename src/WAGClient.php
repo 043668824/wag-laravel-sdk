@@ -4,34 +4,45 @@ namespace WAG\LaravelSDK;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Log;
+use WAG\LaravelSDK\Contracts\ClientInterface;
 use WAG\LaravelSDK\Exceptions\WAGException;
 use WAG\LaravelSDK\Services\{
     AdminService,
     SessionService,
     WebhookService,
     NewsletterService,
-    MessageService,
-    ContactService,
     GroupService,
-    MediaService
+    ChatService,
+    UserService
 };
 
-class WAGClient
+class WAGClient implements ClientInterface
 {
     private Client $httpClient;
     private string $baseUrl;
-    private ?string $userToken;
-    private ?string $adminApiKey;
+    private ?string $userToken = null;
+    private ?string $adminToken;
+    private bool $logging;
+    private string $logChannel;
 
-    public function __construct(string $baseUrl, ?string $userToken = null)
+    /**
+     * Create a new WAG client instance
+     */
+    public function __construct(string $baseUrl, ?string $adminToken = null, array $config = [])
     {
         $this->baseUrl = rtrim($baseUrl, '/');
-        $this->userToken = $userToken;
-        $this->adminApiKey = config('wag.admin_api_key');
+        $this->adminToken = $adminToken;
         
+        // Configure logging
+        $this->logging = $config['logging']['enabled'] ?? false;
+        $this->logChannel = $config['logging']['channel'] ?? 'stack';
+        
+        // Configure HTTP client
         $this->httpClient = new Client([
             'base_uri' => $this->baseUrl,
-            'timeout' => config('wag.timeout', 30),
+            'timeout' => $config['http']['timeout'] ?? 30,
+            'connect_timeout' => $config['http']['connect_timeout'] ?? 10,
         ]);
     }
 
@@ -52,53 +63,32 @@ class WAGClient
         return $this->userToken;
     }
 
+    /**
+     * Clear the user token
+     */
+    public function clearUserToken(): self
+    {
+        $this->userToken = null;
+        return $this;
+    }
+
+    /**
+     * Create a new admin service instance
+     */
     public function admin(): AdminService
     {
         return new AdminService($this);
     }
-
-    public function session(): SessionService
-    {
-        return new SessionService($this);
-    }
-
-    public function webhook(): WebhookService
-    {
-        return new WebhookService($this);
-    }
-
-    public function newsletter(): NewsletterService
-    {
-        return new NewsletterService($this);
-    }
-
-    public function message(): MessageService
-    {
-        return new MessageService($this);
-    }
-
-    public function contact(): ContactService
-    {
-        return new ContactService($this);
-    }
-
-    public function group(): GroupService
-    {
-        return new GroupService($this);
-    }
-
-    public function media(): MediaService
-    {
-        return new MediaService($this);
-    }
-
+    
+    // Other service methods...
+    
     /**
      * Make request with user token authentication
      */
     public function request(string $method, string $endpoint, array $data = []): array
     {
         if (!$this->userToken) {
-            throw new WAGException('User token is required for this operation. Use setUserToken() or pass token to constructor.');
+            throw new WAGException('User token is required. Use setUserToken() before making requests.');
         }
 
         return $this->makeRequest($method, $endpoint, $data, ['token' => $this->userToken]);
@@ -109,19 +99,19 @@ class WAGClient
      */
     public function requestAsAdmin(string $method, string $endpoint, array $data = []): array
     {
-        if (!$this->adminApiKey) {
-            throw new WAGException('Admin API key is required for this operation. Set WAG_ADMIN_API_KEY in config.');
+        if (!$this->adminToken) {
+            throw new WAGException('Admin token is required. Set WUZAPI_ADMIN_TOKEN in config.');
         }
 
-        return $this->makeRequest($method, $endpoint, $data, ['Authorization' => $this->adminApiKey]);
+        return $this->makeRequest($method, $endpoint, $data, ['Authorization' => $this->adminToken]);
     }
 
     /**
-     * Make request without authentication (for public endpoints)
+     * Make one-time request with specific token
      */
-    public function requestPublic(string $method, string $endpoint, array $data = []): array
+    public function requestWithToken(string $method, string $endpoint, string $token, array $data = []): array
     {
-        return $this->makeRequest($method, $endpoint, $data);
+        return $this->makeRequest($method, $endpoint, $data, ['token' => $token]);
     }
 
     /**
@@ -129,7 +119,14 @@ class WAGClient
      */
     private function makeRequest(string $method, string $endpoint, array $data = [], array $headers = []): array
     {
+        $endpoint = ltrim($endpoint, '/');  // Ensure no leading slash
+        
         try {
+            // Log request if logging is enabled
+            if ($this->logging) {
+                $this->logRequest($method, $endpoint, $data);
+            }
+            
             $options = [
                 'headers' => array_merge([
                     'Content-Type' => 'application/json',
@@ -144,14 +141,91 @@ class WAGClient
             }
 
             $response = $this->httpClient->request($method, $endpoint, $options);
+            $contents = $response->getBody()->getContents();
+            $result = json_decode($contents, true);
             
-            return json_decode($response->getBody()->getContents(), true);
+            // Log response if logging is enabled
+            if ($this->logging) {
+                $this->logResponse($result);
+            }
+            
+            return $result ?: ['success' => true];
+            
         } catch (RequestException $e) {
             $response = $e->getResponse();
             $statusCode = $response ? $response->getStatusCode() : 0;
             $body = $response ? $response->getBody()->getContents() : $e->getMessage();
             
+            // Log error if logging is enabled
+            if ($this->logging) {
+                $this->logError($e, $statusCode, $body);
+            }
+            
             throw new WAGException("API request failed: {$body}", $statusCode, $e);
         }
+    }
+    
+    /**
+     * Log API request
+     */
+    private function logRequest(string $method, string $endpoint, array $data): void
+    {
+        // Don't log sensitive information
+        $sanitizedData = $this->sanitizeData($data);
+        
+        Log::channel($this->logChannel)->debug('WAG API Request', [
+            'method' => $method,
+            'endpoint' => $endpoint,
+            'data' => $sanitizedData,
+        ]);
+    }
+    
+    /**
+     * Log API response
+     */
+    private function logResponse(array $response): void
+    {
+        // Don't log potentially sensitive response data
+        $sanitizedResponse = $this->sanitizeData($response);
+        
+        Log::channel($this->logChannel)->debug('WAG API Response', [
+            'response' => $sanitizedResponse,
+        ]);
+    }
+    
+    /**
+     * Log API error
+     */
+    private function logError(\Exception $e, int $statusCode, string $body): void
+    {
+        Log::channel($this->logChannel)->error('WAG API Error', [
+            'status' => $statusCode,
+            'message' => $e->getMessage(),
+            'response' => $body,
+        ]);
+    }
+    
+    /**
+     * Remove sensitive data from logs
+     */
+    private function sanitizeData(array $data): array
+    {
+        $sensitiveFields = [
+            'token', 'password', 'secret', 'key', 'auth', 'authorization', 'image', 'audio', 'video', 'document'
+        ];
+        
+        $sanitized = [];
+        
+        foreach ($data as $key => $value) {
+            if (is_string($key) && in_array(strtolower($key), $sensitiveFields)) {
+                $sanitized[$key] = '[REDACTED]';
+            } elseif (is_array($value)) {
+                $sanitized[$key] = $this->sanitizeData($value);
+            } else {
+                $sanitized[$key] = $value;
+            }
+        }
+        
+        return $sanitized;
     }
 }

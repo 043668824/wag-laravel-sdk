@@ -6,29 +6,42 @@ return [
     | WUZAPI Base URL
     |--------------------------------------------------------------------------
     |
-    | The base URL for your WUZAPI service.
+    | This is the base URL for the WUZAPI service.
     |
     */
-    'base_url' => env('WAG_BASE_URL', 'http://localhost:8080'),
+    'base_url' => env('WUZAPI_BASE_URL', 'http://localhost:8080'),
 
     /*
     |--------------------------------------------------------------------------
-    | Admin API Key
+    | WUZAPI Admin Token
     |--------------------------------------------------------------------------
     |
-    | The API key for authenticating with WUZAPI admin endpoints.
-    | This is for administrative operations only.
+    | This is the admin token used for administrative operations.
     |
     */
-    'admin_api_key' => env('WAG_ADMIN_API_KEY'),
+    'admin_token' => env('WUZAPI_ADMIN_TOKEN'),
 
     /*
     |--------------------------------------------------------------------------
-    | Request Timeout
+    | HTTP Client Configuration
     |--------------------------------------------------------------------------
     |
-    | The timeout in seconds for API requests.
+    | Configure Guzzle HTTP client settings
     |
     */
-    'timeout' => env('WAG_TIMEOUT', 30),
+    'timeout' => env('WUZAPI_TIMEOUT', 30),
+    'connect_timeout' => env('WUZAPI_CONNECT_TIMEOUT', 10),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Logging Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure SDK logging behavior
+    |
+    */
+    'logging' => [
+        'enabled' => env('WUZAPI_LOGGING', false),
+        'channel' => env('WUZAPI_LOG_CHANNEL', 'stack'),
+    ],
 ];

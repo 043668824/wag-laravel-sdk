@@ -51,420 +51,271 @@ Publish the configuration file:
 php artisan vendor:publish --tag=wag-config
 ```
 
-Add environment variables to your `.env`:
+The package will automatically register its service provider with Laravel.
 
-```env
-WAG_BASE_URL=http://localhost:8080
-WAG_ADMIN_API_KEY=your-admin-api-key
-WAG_TIMEOUT=30
-```
+After installing, publish the configuration file:
 
-## Authentication
+bash
+php artisan vendor:publish --tag=wag-config
+Configuration
 
-WAG Laravel SDK uses two authentication methods:
+Add the following variables to your .env file:
 
-| Type              | Usage                     | Storage                          |
-| ----------------- | ------------------------- | -------------------------------- |
-| **User Tokens**   | Standard API operations   | Database/Session/Cache (dynamic) |
-| **Admin API Key** | Administrative operations | Environment variable (static)    |
+Code
+WUZAPI_BASE_URL=https://your-wuzapi-instance.com
+WUZAPI_ADMIN_TOKEN=your-admin-token-here
+WUZAPI_TIMEOUT=30
+WUZAPI_CONNECT_TIMEOUT=10
+WUZAPI_LOGGING=false
+WUZAPI_LOG_CHANNEL=stack
+Basic Usage
 
-> ⚠️ **Important**: Never store user tokens in environment variables. They should be managed dynamically per user/session.
+Authentication
 
-## Quick Start
-
-### 1. Set User Token
-
-```php
+PHP
+// Using the facade (recommended)
 use WAG\LaravelSDK\Facades\WAG;
 
-// Method 1: Set token on facade
-$wag = WAG::setUserToken('user-specific-token');
+// Set your user token
+WAG::setUserToken('your-user-token');
 
-// Method 2: Create client with token
-$wag = new \WAG\LaravelSDK\WAGClient(config('wag.base_url'), 'user-token');
-```
+// Or using dependency injection
+public function sendMessage(WAGClient $wagClient)
+{
+$wagClient->setUserToken('your-user-token');
+// ...
+}
+Messaging
 
-### 2. Send Your First Message
+Text Messages
 
-```php
-$result = $wag->message()->sendText('1234567890@c.us', 'Hello from Laravel!');
-```
+PHP
+// Send a simple text message
+$response = WAG::chat()->sendSimpleText('5491155553934', 'Hello from WAG SDK!');
 
-### 3. Get WhatsApp QR Code
+// Send a text message with custom ID
+$response = WAG::chat()->sendSimpleText('5491155553934', 'Hello with custom ID', 'msg-123456');
 
-```php
-$qrCode = $wag->session()->getQRCode();
-```
+// Send a text as reply to previous message
+$response = WAG::chat()->sendTextReply(
+'5491155553934',
+'This is a reply',
+'original-message-id',
+'sender-jid'
+);
+Rich Media
 
-## Usage Guide
+PHP
+// Send an image from base64
+$response = WAG::chat()->sendImageFromBase64('5491155553934', $base64Image, 'Optional caption');
 
-### Session Management
+// Send an image from URL
+$response = WAG::chat()->sendImageFromUrl('5491155553934', 'https://example.com/image.jpg', 'Image caption');
 
-```php
-// Connect to WhatsApp
-$connection = $wag->session()->connect();
-
-// Get QR code for new device
-$qrCode = $wag->session()->getQRCode();
-
-// Check connection status
-$status = $wag->session()->status();
-
-// Disconnect
-$wag->session()->disconnect();
-
-// Logout
-$wag->session()->logout();
-```
-
-### Messaging
-
-#### Text Messages
-
-```php
-$wag->message()->sendText('1234567890@c.us', 'Hello World!');
-```
-
-#### Media Messages
-
-```php
-// Image with caption
-$wag->message()->sendImage(
-    '1234567890@c.us',
-    'https://example.com/image.jpg',
-    'Check this out!'
+// Send a document
+$response = WAG::chat()->sendDocumentFromBase64(
+'5491155553934',
+$base64Document,
+'document.pdf'
 );
 
-// Document
-$wag->message()->sendDocument(
-    '1234567890@c.us',
-    'https://example.com/document.pdf',
-    'report.pdf'
+// Send an audio message
+$response = WAG::chat()->sendAudioFromBase64('5491155553934', $base64Audio);
+
+// Send a video
+$response = WAG::chat()->sendVideoFromBase64('5491155553934', $base64Video, 'Video caption');
+Interactive Messages
+
+PHP
+// Send a template with quick reply buttons
+$buttons = [
+    WAG::chat()->createQuickReplyButton('btn1', 'Yes'),
+    WAG::chat()->createQuickReplyButton('btn2', 'No'),
+    WAG::chat()->createQuickReplyButton('btn3', 'Maybe')
+];
+$response = WAG::chat()->sendSimpleTemplate('5491155553934', 'Do you like this SDK?', $buttons, 'Footer text');
+
+// Send a list message
+$section1 = WAG::chat()->createListSection('Section 1', [
+    WAG::chat()->createListRow('row1', 'Option 1', 'Description for option 1'),
+    WAG::chat()->createListRow('row2', 'Option 2', 'Description for option 2')
+]);
+$section2 = WAG::chat()->createListSection('Section 2', [
+WAG::chat()->createListRow('row3', 'Option 3', 'Description for option 3')
+]);
+$response = WAG::chat()->sendListMessage(
+    '5491155553934',
+    'Please select an option:',
+    [$section1, $section2],
+'Select',
+'Footer text',
+'List Title'
 );
 
-// Audio
-$wag->message()->sendAudio('1234567890@c.us', 'https://example.com/audio.mp3');
-
-// Video with caption
-$wag->message()->sendVideo(
-    '1234567890@c.us',
-    'https://example.com/video.mp4',
-    'Amazing video!'
+// Send location
+$response = WAG::chat()->sendLocationCoordinates(
+'5491155553934',
+-34.603722,
+-58.381592,
+'Buenos Aires',
+'Argentina'
 );
+Group Management
 
-// Location
-$wag->message()->sendLocation('1234567890@c.us', -6.200000, 106.816666);
-```
+PHP
+// Create a group
+$response = WAG::group()->createSimple('My Cool Group', ['5491155553934', '5491144442233']);
 
-#### Message Actions
+// Add members to a group
+$response = WAG::group()->addParticipants('123456789@g.us', ['5491155553934']);
 
-```php
-// Get message history
-$history = $wag->message()->getHistory('1234567890@c.us', 50);
+// Remove members from a group
+$response = WAG::group()->removeParticipant('123456789@g.us', '5491155553934');
 
-// Send reaction
-$wag->message()->sendReaction('1234567890@c.us', 'message-id', '👍');
+// Promote member to admin
+$response = WAG::group()->promoteParticipant('123456789@g.us', '5491155553934');
 
-// Mark as read
-$wag->message()->markAsRead('1234567890@c.us', 'message-id');
-```
+// Change group name
+$response = WAG::group()->setName('123456789@g.us', 'New Group Name');
 
-### Contact Management
+// Change group description
+$response = WAG::group()->setTopic('123456789@g.us', 'This is a group for testing the WAG SDK');
 
-```php
-// Get contact information
-$contact = $wag->contact()->getInfo('1234567890@c.us');
+// Enable disappearing messages (7 days)
+$response = WAG::group()->enableDisappearing7d('123456789@g.us');
 
-// Get profile picture
-$avatar = $wag->contact()->getProfilePicture('1234567890@c.us');
+// Get group information
+$groupInfo = WAG::group()->getInfo('123456789@g.us');
+User Management (Admin)
 
-// Check if number exists on WhatsApp
-$exists = $wag->contact()->checkExists('1234567890');
-
-// Get all contacts
-$contacts = $wag->contact()->getAll();
-
-// Block/Unblock
-$wag->contact()->block('1234567890@c.us');
-$wag->contact()->unblock('1234567890@c.us');
-```
-
-### Group Management
-
-```php
-// Create group
-$group = $wag->group()->create('Laravel Developers', [
-    '1234567890@c.us',
-    '0987654321@c.us'
-]);
-
-// Get group info
-$info = $wag->group()->getInfo('group-id@g.us');
-
-// Manage participants
-$wag->group()->addParticipants('group-id@g.us', ['1111111111@c.us']);
-$wag->group()->removeParticipants('group-id@g.us', ['1111111111@c.us']);
-
-// Admin actions
-$wag->group()->promoteParticipants('group-id@g.us', ['1111111111@c.us']);
-$wag->group()->demoteParticipants('group-id@g.us', ['1111111111@c.us']);
-
-// Group settings
-$wag->group()->updateSettings('group-id@g.us', [
-    'name' => 'New Group Name',
-    'description' => 'Updated description'
-]);
-
-// Invite links
-$inviteLink = $wag->group()->getInviteLink('group-id@g.us');
-$wag->group()->revokeInviteLink('group-id@g.us');
-
-// Leave group
-$wag->group()->leave('group-id@g.us');
-```
-
-### Webhook Management
-
-```php
-// Get current webhook
-$webhook = $wag->webhook()->get();
-
-// Set webhook with events
-$wag->webhook()->set('https://yourapp.com/webhook', [
-    'Message',
-    'ReadReceipt',
-    'Presence'
-]);
-
-// Update webhook
-$wag->webhook()->update([
-    'webhook' => 'https://newdomain.com/webhook',
-    'events' => ['Message'],
-    'active' => true
-]);
-
-// Delete webhook
-$wag->webhook()->delete();
-```
-
-### Newsletter Management
-
-```php
-// List subscribed newsletters
-$newsletters = $wag->newsletter()->list();
-
-// Subscribe to newsletter
-$wag->newsletter()->subscribe('newsletter-id@newsletter');
-
-// Unsubscribe
-$wag->newsletter()->unsubscribe('newsletter-id@newsletter');
-```
-
-### Media Management
-
-```php
-// Upload media
-$upload = $wag->media()->upload('/path/to/file.jpg');
-
-// Download media
-$download = $wag->media()->download('media-id');
-
-// Get media info
-$info = $wag->media()->getInfo('media-id');
-
-// Delete media
-$wag->media()->delete('media-id');
-```
-
-### Admin Operations
-
-Admin operations use the admin API key from configuration:
-
-```php
-// List all users
+PHP
+// List all users (requires admin token)
 $users = WAG::admin()->listUsers();
 
-// Create new user
-$user = WAG::admin()->createUser([
-    'name' => 'John Doe',
-    'webhook' => 'https://webhook.example.com'
-]);
+// Create a new user
+$user = WAG::admin()->createSimpleUser('NewUser', 'https://your-webhook.com/wuzapi');
 
-// Delete user (database only)
-WAG::admin()->deleteUser('user-id');
+// Create a user with proxy configuration
+$user = WAG::admin()->createUserWithProxy(
+'ProxyUser',
+'https://your-webhook.com/wuzapi',
+'http://your-proxy-server:3128',
+true
+);
 
-// Full deletion (database, files, logout, cleanup)
-WAG::admin()->deleteUserFull('user-id');
-```
+// Delete a user
+$response = WAG::admin()->deleteUser('user-id');
 
-## Token Management
+// Delete a user completely (including all data)
+$response = WAG::admin()->deleteUserFull('user-id');
+Session Management
 
-### Using in Controllers
+PHP
+// Connect to WhatsApp
+$response = WAG::session()->connect();
 
-```php
-<?php
+// Connect with specific event subscriptions
+$response = WAG::session()->connectWithEvents(['Message', 'ReadReceipt']);
 
-namespace App\Http\Controllers;
+// Get QR Code for scanning
+$qrCode = WAG::session()->getQRCodeData();
 
-use WAG\LaravelSDK\Facades\WAG;
-use WAG\LaravelSDK\Services\UserTokenService;
-use WAG\LaravelSDK\Exceptions\WAGException;
+// Get pairing code for phone linking
+$pairingCode = WAG::session()->getPairingCode();
 
-class WhatsAppController extends Controller
-{
-    public function sendMessage(Request $request)
-    {
-        // Get user token (implement based on your needs)
-        $userToken = auth()->user()->wag_token;
+// Check connection status
+$isConnected = WAG::session()->isConnected();
+$isLoggedIn = WAG::session()->isLoggedIn();
+$isReady = WAG::session()->isReady();
 
-        try {
-            $result = WAG::setUserToken($userToken)
-                ->message()
-                ->sendText($request->chat_id, $request->message);
+// Wait for connection with timeout
+$connected = WAG::session()->waitForConnection(30);
+$loggedIn = WAG::session()->waitForLogin(60);
 
-            return response()->json($result);
-        } catch (WAGException $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
-    }
-}
-```
+// Disconnect
+$response = WAG::session()->disconnect();
 
-### Using with Eloquent Models
+// Logout (terminate session)
+$response = WAG::session()->logout();
+Webhook Management
 
-```php
-<?php
+PHP
+// Set webhook URL for all events
+$response = WAG::webhook()->setForAllEvents('https://your-webhook.com/wuzapi');
 
-namespace App\Models;
+// Set webhook for specific events
+$response = WAG::webhook()->setWithEvents(
+'https://your-webhook.com/wuzapi',
+['Message', 'ReadReceipt']
+);
 
-use Illuminate\Database\Eloquent\Model;
-use WAG\LaravelSDK\Traits\ManagesUserTokens;
+// Get current webhook configuration
+$config = WAG::webhook()->get();
 
-class User extends Model
-{
-    use ManagesUserTokens;
+// Update webhook URL
+$response = WAG::webhook()->updateUrl('https://your-new-webhook.com/wuzapi');
 
-    protected $fillable = ['wag_token'];
+// Activate webhook
+$response = WAG::webhook()->activate();
 
-    public function sendWhatsAppMessage(string $chatId, string $message)
-    {
-        return $this->createWAGClient($this->wag_token)
-            ->message()
-            ->sendText($chatId, $message);
-    }
-}
-```
+// Deactivate webhook
+$response = WAG::webhook()->deactivate();
 
-### Token Storage Options
+// Delete webhook configuration
+$response = WAG::webhook()->delete();
+Error Handling
 
-```php
-use WAG\LaravelSDK\Services\UserTokenService;
+The SDK throws WAGException when API calls fail:
 
-// Store in session
-UserTokenService::storeInSession($token, $userId);
-
-// Store in cache with TTL
-UserTokenService::storeInCache($token, $userId, 60); // 60 minutes
-
-// Retrieve from storage
-$token = UserTokenService::getFromSession($userId);
-$token = UserTokenService::getFromCache($userId);
-
-// Remove from storage
-UserTokenService::forget($userId);
-```
-
-## Error Handling
-
-```php
+PHP
 use WAG\LaravelSDK\Exceptions\WAGException;
 
 try {
-    $result = $wag->message()->sendText('1234567890@c.us', 'Hello!');
+$response = WAG::chat()->sendSimpleText('5491155553934', 'Hello!');
 } catch (WAGException $e) {
-    switch ($e->getCode()) {
-        case 401:
-            // Unauthorized - token invalid
-            Log::warning('Invalid WAG token', ['user' => auth()->id()]);
-            break;
-        case 404:
-            // Chat not found
-            Log::info('Chat not found', ['chat_id' => '1234567890@c.us']);
-            break;
-        default:
-            Log::error('WAG API Error', [
-                'message' => $e->getMessage(),
-                'code' => $e->getCode()
-            ]);
-    }
+$errorMessage = $e->getMessage();
+$statusCode = $e->getCode();
+$responseData = $e->getResponseData();
+
+    // Handle error
+    Log::error("WhatsApp API Error: {$errorMessage}", [
+        'code' => $statusCode,
+        'data' => $responseData
+    ]);
+
 }
-```
+Phone Number Formatting
 
-## Response Format
+The SDK automatically formats phone numbers to meet WhatsApp API requirements:
 
-WUZAPI returns standardized responses:
+PHP
+// These all result in the same formatted number
+WAG::chat()->sendSimpleText('5491155553934', 'Hello!');
+WAG::chat()->sendSimpleText('+5491155553934', 'Hello!');
+WAG::chat()->sendSimpleText('549 11 5555 3934', 'Hello!');
+Available Services
 
-```json
-{
-  "code": 200,
-  "data": {
-    "messageId": "ABC123",
-    "status": "sent"
-  },
-  "success": true,
-  "details": "Message sent successfully"
-}
-```
+The SDK provides the following services:
 
-## Security Best Practices
+admin() - Administrative operations
+session() - Session management and connection
+webhook() - Webhook configuration
+chat() - Messaging operations
+user() - User profile operations
+group() - Group management
+newsletter() - Newsletter operations
+Utility Classes
 
-✅ **Do:**
+The SDK includes helpful utility classes:
 
-- Store user tokens in database/session/cache
-- Use HTTPS for all communications
-- Implement token rotation mechanisms
-- Validate webhook signatures
-- Log API usage for auditing
+PhoneFormatter - Format and validate phone numbers
+ResponseFormatter - Extract and process API responses
+Security
 
-❌ **Don't:**
+Never store WhatsApp tokens in environment variables or in version control
+Use proper database encryption for storing user tokens
+Consider implementing token rotation for enhanced security
+Testing
 
-- Store user tokens in environment files
-- Expose tokens in client-side code
-- Commit tokens to version control
-- Share tokens between users
-- Log sensitive token data
-
-## Requirements
-
-- PHP 8.1 or higher
-- Laravel 9.0 or higher
-- GuzzleHTTP 7.0 or higher
-- WUZAPI server instance
-
-## Testing
-
-```bash
+bash
 composer test
-```
-
-## Contributing
-
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
-
-## Changelog
-
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## License
-
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
-
-## Support
-
-- 📧 Email: [support@example.com](mailto:support@example.com)
-- 🐛 Issues: [GitHub Issues](https://github.com/043668824/wag-laravel-sdk/issues)
-- 📖 Documentation: [GitHub Wiki](https://github.com/043668824/wag-laravel-sdk/wiki)
-
----
-
-Built with ❤️ for the Laravel community

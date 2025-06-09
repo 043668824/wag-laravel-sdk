@@ -4,8 +4,15 @@ namespace WAG\LaravelSDK\Tests\Unit;
 
 use WAG\LaravelSDK\Tests\TestCase;
 use WAG\LaravelSDK\WAGClient;
-use WAG\LaravelSDK\Services\MessageService;
+use WAG\LaravelSDK\Services\ChatService;
 
+/**
+ * WAGClient Unit Tests
+ *
+ * @author  Your Name
+ * @version 1.0.0
+ * @date    2025-06-09
+ */
 class WAGClientTest extends TestCase
 {
     private WAGClient $client;
@@ -21,9 +28,9 @@ class WAGClientTest extends TestCase
         $this->assertInstanceOf(WAGClient::class, $this->client);
     }
 
-    public function test_can_get_message_service()
+    public function test_can_get_chat_service()
     {
-        $messageService = $this->client->message();
-        $this->assertInstanceOf(MessageService::class, $messageService);
+        $chatService = $this->client->chat();
+        $this->assertInstanceOf(ChatService::class, $chatService);
     }
 }

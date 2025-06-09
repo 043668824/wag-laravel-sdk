@@ -1,44 +1,65 @@
 {
-    "name": "043668824/wag-laravel-sdk",
-    "description": "Laravel SDK for WhatsApp API Gateway using tulir/whatsmeow",
-    "keywords": ["laravel", "whatsapp", "api", "sdk", "whatsmeow"],
-    "type": "library",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "043668824",
-            "email": "your-email@example.com"
-        }
-    ],
-    "require": {
-        "php": "^8.1",
-        "illuminate/support": "^9.0|^10.0|^11.0",
-        "guzzlehttp/guzzle": "^7.0"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^9.0|^10.0",
-        "orchestra/testbench": "^7.0|^8.0|^9.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "WAG\\LaravelSDK\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "WAG\\LaravelSDK\\Tests\\": "tests/"
-        }
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "WAG\\LaravelSDK\\WAGServiceProvider"
-            ],
-            "aliases": {
-                "WAG": "WAG\\LaravelSDK\\Facades\\WAG"
-            }
-        }
-    },
-    "minimum-stability": "stable",
-    "prefer-stable": true
+  "name": "043668824/wag-laravel-sdk",
+  "description": "Laravel SDK for WhatsApp API Gateway - A comprehensive package for integrating WhatsApp messaging capabilities into Laravel applications",
+  "keywords": [
+    "laravel",
+    "whatsapp",
+    "api",
+    "sdk",
+    "whatsmeow",
+    "messaging",
+    "webhook",
+    "gateway"
+  ],
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "043668824",
+      "email": "dev@example.com",
+      "homepage": "https://github.com/043668824"
+    }
+  ],
+  "homepage": "https://github.com/043668824/wag-laravel-sdk",
+  "support": {
+    "issues": "https://github.com/043668824/wag-laravel-sdk/issues",
+    "source": "https://github.com/043668824/wag-laravel-sdk"
+  },
+  "require": {
+    "php": "^8.1",
+    "illuminate/support": "^9.0|^10.0|^11.0",
+    "guzzlehttp/guzzle": "^7.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.0|^10.0",
+    "orchestra/testbench": "^7.0|^8.0|^9.0",
+    "laravel/pint": "^1.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "WAG\\LaravelSDK\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "WAG\\LaravelSDK\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "vendor/bin/phpunit",
+    "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
+    "format": "vendor/bin/pint"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "WAG\\LaravelSDK\\WAGServiceProvider"
+      ],
+      "aliases": {
+        "WAG": "WAG\\LaravelSDK\\Facades\\WAG"
+      }
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }

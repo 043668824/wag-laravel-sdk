@@ -1,9 +1,15 @@
 <?php
 
 namespace WAG\LaravelSDK\Services;
+use Illuminate\Support\Str;
 
 class AdminService extends BaseService
 {
+    private function generateSecureToken(): string
+    {
+        return 'wag_' . (string) Str::uuid();
+    }
+
     /**
      * List all users
      * GET /admin/users
@@ -33,6 +39,7 @@ class AdminService extends BaseService
     {
         $userData = [
             'name' => $name,
+            'token' => $this->generateSecureToken(),
             'events' => $events
         ];
 
@@ -56,6 +63,7 @@ class AdminService extends BaseService
         return $this->createUser([
             'name' => $name,
             'webhook' => $webhook,
+            'token' => $this->generateSecureToken(),
             'events' => $events,
             'proxy_config' => [
                 'enabled' => $proxyEnabled,
@@ -75,6 +83,7 @@ class AdminService extends BaseService
     ): array {
         return $this->createUser([
             'name' => $name,
+            'token' => $this->generateSecureToken(),
             'webhook' => $webhook,
             'events' => $events,
             's3_config' => $s3Config
